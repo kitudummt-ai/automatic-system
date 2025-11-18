@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultimate Timer App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&family=Bebas+Neue&family=Press+Start+2P&family=Playfair+Display:wght@700&family=Share+Tech+Mono&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="videoBackground" class="video-background"></div>
+  <div id="backgroundOverlay" class="background-overlay"></div>
+  
+  <div class="app-container">
+    <!-- Header with Mode Selector -->
+    <header class="header">
+      <h1 class="app-title">Ultimate Timer</h1>
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+        <button class="mode-btn" data-mode="countdown">Countdown</button>
+        <button class="mode-btn" data-mode="stopwatch">Stopwatch</button>
+      </div>
+    </header>
+
+    <!-- Timer Display -->
+    <main class="timer-section">
+      <!-- Pomodoro Status -->
+      <div id="pomodoroStatus" class="pomodoro-status">
+        <div class="session-type">Work Session</div>
+        <div class="session-counter">Session 1 of 4</div>
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Countdown Input -->
+      <div id="countdownInput" class="countdown-input hidden">
+        <div class="input-group">
+          <input type="number" id="hoursInput" min="0" max="23" value="0" class="time-input">
+          <label>Hours</label>
+        </div>
+        <div class="input-group">
+          <input type="number" id="minutesInput" min="0" max="59" value="5" class="time-input">
+          <label>Minutes</label>
+        </div>
+        <div class="input-group">
+          <input type="number" id="secondsInput" min="0" max="59" value="0" class="time-input">
+          <label>Seconds</label>
+        </div>
+      </div>
+
+      <!-- Timer Display -->
+      <div id="timerDisplay" class="timer-display">
+        <div class="digit-group">
+          <div class="digit" data-digit="hours-tens">0</div>
+          <div class="digit" data-digit="hours-ones">0</div>
+        </div>
+        <div class="separator">:</div>
+        <div class="digit-group">
+          <div class="digit" data-digit="minutes-tens">2</div>
+          <div class="digit" data-digit="minutes-ones">5</div>
+        </div>
+        <div class="separator">:</div>
+        <div class="digit-group">
+          <div class="digit" data-digit="seconds-tens">0</div>
+          <div class="digit" data-digit="seconds-ones">0</div>
+        </div>
+      </div>
+
+      <!-- Timer Controls -->
+      <div class="timer-controls">
+        <button id="startPauseBtn" class="btn btn--primary btn--lg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Start
+        </button>
+        <button id="resetBtn" class="btn btn--secondary btn--lg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+            <path d="M21 3v5h-5"></path>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+            <path d="M3 21v-5h5"></path>
+          </svg>
+          Reset
+        </button>
+        <button id="settingsBtn" class="btn btn--outline btn--lg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6m5.2-14.8l-4.2 4.2m-2.8 2.8l-4.2 4.2M23 12h-6m-6 0H1m14.8 5.2l-4.2-4.2m-2.8-2.8l-4.2-4.2"></path>
+          </svg>
+          Settings
+        </button>
+      </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-content">
+        <div class="settings-header">
+          <h2>Settings</h2>
+          <button id="closeSettings" class="close-btn">&times;</button>
+        </div>
+
+        <div class="settings-body">
+          <!-- Flip Animation Toggle -->
+          <div class="setting-group">
+            <label class="setting-label">
+              <input type="checkbox" id="flipToggle" class="toggle-input">
+              <span class="toggle-slider"></span>
+              <span class="setting-text">Flip Animation</span>
+            </label>
+          </div>
+
+          <!-- Sound Toggle -->
+          <div class="setting-group">
+            <label class="setting-label">
+              <input type="checkbox" id="soundToggle" class="toggle-input" checked>
+              <span class="toggle-slider"></span>
+              <span class="setting-text">Sound Notifications</span>
+            </label>
+          </div>
+
+          <!-- Font Selector -->
+          <div class="setting-group">
+            <label class="form-label">Timer Font</label>
+            <select id="fontSelector" class="form-control">
+              <option value="'Orbitron', monospace">Digital LCD</option>
+              <option value="'Roboto', sans-serif">Modern Sans</option>
+              <option value="'Bebas Neue', cursive">Bold Display</option>
+              <option value="'Courier New', monospace">Monospace</option>
+              <option value="'Press Start 2P', cursive">Retro</option>
+              <option value="'Playfair Display', serif">Elegant</option>
+              <option value="'Share Tech Mono', monospace">Tech</option>
+              <option value="'Inter', sans-serif">Clean</option>
+            </select>
+          </div>
+
+          <!-- Background Upload -->
+          <div class="setting-group">
+            <label class="form-label">Custom Background</label>
+            <div class="upload-section">
+              <label for="backgroundUpload" class="upload-btn btn btn--secondary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload Image/Video
+              </label>
+              <input type="file" id="backgroundUpload" accept="image/*,video/*" class="file-input">
+              <button id="clearBackground" class="btn btn--outline btn--sm">Clear Background</button>
+            </div>
+            <div id="uploadStatus" class="upload-status"></div>
+          </div>
+
+          <!-- Pomodoro Settings -->
+          <div id="pomodoroSettings" class="setting-group">
+            <h3 class="setting-section-title">Pomodoro Settings</h3>
+            <div class="pomodoro-inputs">
+              <div class="form-group">
+                <label class="form-label">Work Duration (minutes)</label>
+                <input type="number" id="workDuration" min="1" max="60" value="25" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Short Break (minutes)</label>
+                <input type="number" id="shortBreak" min="1" max="30" value="5" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Long Break (minutes)</label>
+                <input type="number" id="longBreak" min="1" max="60" value="15" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Sessions Until Long Break</label>
+                <input type="number" id="sessionsUntilLongBreak" min="2" max="10" value="4" class="form-control">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
