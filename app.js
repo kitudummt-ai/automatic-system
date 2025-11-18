@@ -84,6 +84,10 @@ function init() {
   setupEventListeners();
   updateDisplay();
   updatePomodoroDisplay();
+  
+  // Initialize settings toggles
+  elements.flipToggle.checked = timerState.flipEnabled;
+  elements.soundToggle.checked = timerState.soundEnabled;
 }
 
 // Event Listeners
@@ -203,7 +207,7 @@ function pauseTimer() {
   timerState.isPaused = true;
   
   if (timerState.intervalId) {
-    cancelAnimationFrame(timerState.intervalId);
+    clearInterval(timerState.intervalId);
     timerState.intervalId = null;
   }
   
@@ -220,7 +224,7 @@ function stopTimer() {
   timerState.isPaused = false;
   
   if (timerState.intervalId) {
-    cancelAnimationFrame(timerState.intervalId);
+    clearInterval(timerState.intervalId);
     timerState.intervalId = null;
   }
   
@@ -248,7 +252,7 @@ function resetTimer() {
 
 // Timer Logic
 function runTimer() {
-  const tick = () => {
+  timerState.intervalId = setInterval(() => {
     if (!timerState.isRunning) return;
     
     if (timerState.mode === 'stopwatch') {
@@ -268,11 +272,7 @@ function runTimer() {
     if (timerState.mode === 'pomodoro') {
       updateProgressBar();
     }
-    
-    setTimeout(tick, 1000);
-  };
-  
-  tick();
+  }, 1000);
 }
 
 function handleTimerComplete() {
@@ -333,20 +333,24 @@ function updateDisplay() {
 
 function updateDigit(digitType, value) {
   const digitEl = elements.digits[digitType];
-  const currentValue = digitEl.textContent;
+  const currentValue = parseInt(digitEl.textContent);
   
-  if (currentValue !== value.toString()) {
-    if (timerState.flipEnabled) {
-      // Store old and new values for flip animation
+  if (currentValue !== value) {
+    if (timerState.flipEnabled && timerState.isRunning) {
+      // Store old value for flip animation
       digitEl.setAttribute('data-old-value', currentValue);
       digitEl.setAttribute('data-current-value', value);
       
+      // Add flipping class
       digitEl.classList.add('flipping');
+      
+      // Update the visible text after animation
       setTimeout(() => {
         digitEl.textContent = value;
         digitEl.classList.remove('flipping');
       }, 300);
     } else {
+      // No animation, just update
       digitEl.textContent = value;
     }
   }
@@ -438,25 +442,66 @@ function handleBackgroundUpload(e) {
 }
 
 function setImageBackground(dataUrl) {
-  // Only set background for desktop (width > 768px)
-  if (window.innerWidth > 768) {
-    elements.videoBackground.innerHTML = `<div class="background-image" style="background-image: url('${dataUrl}'); background-size: cover; background-position: center; width: 100%; height: 100%;"></div>`;
-    timerState.backgroundMedia = dataUrl;
-    timerState.backgroundType = 'image';
-    elements.uploadStatus.textContent = 'Background image set for desktop!';
-  } else {
-    elements.uploadStatus.textContent = 'Background images are only available on desktop.';
-  }
+  // Clear any existing background
+  elements.videoBackground.innerHTML = '';
   
+  // Create image element
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.alt = 'Background';
+  img.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+  `;
+  
+  // Add to background container
+  elements.videoBackground.appendChild(img);
+  
+  timerState.backgroundMedia = dataUrl;
+  timerState.backgroundType = 'image';
+  
+  elements.uploadStatus.textContent = 'Background image set successfully!';
   setTimeout(() => {
     elements.uploadStatus.textContent = '';
   }, 3000);
 }
 
 function setVideoBackground(dataUrl) {
-  elements.videoBackground.innerHTML = `<video src="${dataUrl}" autoplay loop muted playsinline></video>`;
+  // Clear any existing background
+  elements.videoBackground.innerHTML = '';
+  
+  // Create video element
+  const video = document.createElement('video');
+  video.src = dataUrl;
+  video.autoplay = true;
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+  `;
+  
+  // Add to background container
+  elements.videoBackground.appendChild(video);
+  
   timerState.backgroundMedia = dataUrl;
   timerState.backgroundType = 'video';
+  
+  elements.uploadStatus.textContent = 'Background video set successfully!';
+  setTimeout(() => {
+    elements.uploadStatus.textContent = '';
+  }, 3000);
 }
 
 function clearBackground() {
