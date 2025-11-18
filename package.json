@@ -2,13 +2,9 @@
   "name": "ultimate-timer-app",
   "version": "1.0.0",
   "description": "A feature-rich timer application with Pomodoro, Countdown, and Stopwatch modes",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2"
+    "build": "mkdir -p public && cp index.html style.css app.js public/",
+    "dev": "python3 -m http.server 3000"
   },
   "keywords": [
     "timer",
@@ -18,5 +14,8 @@
     "stopwatch"
   ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@vercel/static-build": "^1.0.0"
+  }
 }
