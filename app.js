@@ -1,549 +1,1446 @@
-// Timer State Management
-const timerState = {
-  mode: 'pomodoro', // pomodoro, countdown, stopwatch
-  isRunning: false,
-  isPaused: false,
-  timeRemaining: 0, // in seconds
-  startTime: 0,
-  elapsedTime: 0,
-  intervalId: null,
-  
-  // Pomodoro specific
-  pomodoroPhase: 'work', // work, shortBreak, longBreak
-  currentSession: 1,
-  totalSessions: 0,
-  workDuration: 25 * 60,
-  shortBreakDuration: 5 * 60,
-  longBreakDuration: 15 * 60,
-  sessionsUntilLongBreak: 4,
-  
-  // Settings
-  flipEnabled: false,
-  soundEnabled: true,
-  currentFont: "'Orbitron', monospace",
-  backgroundMedia: null,
-  backgroundType: null // 'image' or 'video'
-};
+:root {
+  /* Primitive Color Tokens */
+  --color-white: rgba(255, 255, 255, 1);
+  --color-black: rgba(0, 0, 0, 1);
+  --color-cream-50: rgba(252, 252, 249, 1);
+  --color-cream-100: rgba(255, 255, 253, 1);
+  --color-gray-200: rgba(245, 245, 245, 1);
+  --color-gray-300: rgba(167, 169, 169, 1);
+  --color-gray-400: rgba(119, 124, 124, 1);
+  --color-slate-500: rgba(98, 108, 113, 1);
+  --color-brown-600: rgba(94, 82, 64, 1);
+  --color-charcoal-700: rgba(31, 33, 33, 1);
+  --color-charcoal-800: rgba(38, 40, 40, 1);
+  --color-slate-900: rgba(19, 52, 59, 1);
+  --color-teal-300: rgba(50, 184, 198, 1);
+  --color-teal-400: rgba(45, 166, 178, 1);
+  --color-teal-500: rgba(33, 128, 141, 1);
+  --color-teal-600: rgba(29, 116, 128, 1);
+  --color-teal-700: rgba(26, 104, 115, 1);
+  --color-teal-800: rgba(41, 150, 161, 1);
+  --color-red-400: rgba(255, 84, 89, 1);
+  --color-red-500: rgba(192, 21, 47, 1);
+  --color-orange-400: rgba(230, 129, 97, 1);
+  --color-orange-500: rgba(168, 75, 47, 1);
 
-// DOM Elements
-const elements = {
-  // Mode buttons
-  modeBtns: document.querySelectorAll('.mode-btn'),
-  
-  // Timer display
-  timerDisplay: document.getElementById('timerDisplay'),
-  digits: {},
-  
-  // Controls
-  startPauseBtn: document.getElementById('startPauseBtn'),
-  resetBtn: document.getElementById('resetBtn'),
-  settingsBtn: document.getElementById('settingsBtn'),
-  
-  // Pomodoro
-  pomodoroStatus: document.getElementById('pomodoroStatus'),
-  sessionType: document.querySelector('.session-type'),
-  sessionCounter: document.querySelector('.session-counter'),
-  progressFill: document.getElementById('progressFill'),
-  
-  // Countdown input
-  countdownInput: document.getElementById('countdownInput'),
-  hoursInput: document.getElementById('hoursInput'),
-  minutesInput: document.getElementById('minutesInput'),
-  secondsInput: document.getElementById('secondsInput'),
-  
-  // Settings panel
-  settingsPanel: document.getElementById('settingsPanel'),
-  closeSettings: document.getElementById('closeSettings'),
-  flipToggle: document.getElementById('flipToggle'),
-  soundToggle: document.getElementById('soundToggle'),
-  fontSelector: document.getElementById('fontSelector'),
-  backgroundUpload: document.getElementById('backgroundUpload'),
-  clearBackground: document.getElementById('clearBackground'),
-  uploadStatus: document.getElementById('uploadStatus'),
-  
-  // Pomodoro settings
-  pomodoroSettings: document.getElementById('pomodoroSettings'),
-  workDuration: document.getElementById('workDuration'),
-  shortBreak: document.getElementById('shortBreak'),
-  longBreak: document.getElementById('longBreak'),
-  sessionsUntilLongBreak: document.getElementById('sessionsUntilLongBreak'),
-  
-  // Background
-  videoBackground: document.getElementById('videoBackground'),
-  backgroundOverlay: document.getElementById('backgroundOverlay')
-};
+  /* RGB versions for opacity control */
+  --color-brown-600-rgb: 94, 82, 64;
+  --color-teal-500-rgb: 33, 128, 141;
+  --color-slate-900-rgb: 19, 52, 59;
+  --color-slate-500-rgb: 98, 108, 113;
+  --color-red-500-rgb: 192, 21, 47;
+  --color-red-400-rgb: 255, 84, 89;
+  --color-orange-500-rgb: 168, 75, 47;
+  --color-orange-400-rgb: 230, 129, 97;
 
-// Initialize digit references
-const digitTypes = ['hours-tens', 'hours-ones', 'minutes-tens', 'minutes-ones', 'seconds-tens', 'seconds-ones'];
-digitTypes.forEach(type => {
-  elements.digits[type] = document.querySelector(`[data-digit="${type}"]`);
-});
+  /* Background color tokens (Light Mode) */
+  --color-bg-1: rgba(59, 130, 246, 0.08); /* Light blue */
+  --color-bg-2: rgba(245, 158, 11, 0.08); /* Light yellow */
+  --color-bg-3: rgba(34, 197, 94, 0.08); /* Light green */
+  --color-bg-4: rgba(239, 68, 68, 0.08); /* Light red */
+  --color-bg-5: rgba(147, 51, 234, 0.08); /* Light purple */
+  --color-bg-6: rgba(249, 115, 22, 0.08); /* Light orange */
+  --color-bg-7: rgba(236, 72, 153, 0.08); /* Light pink */
+  --color-bg-8: rgba(6, 182, 212, 0.08); /* Light cyan */
 
-// Initialize
-function init() {
-  setupEventListeners();
-  updateDisplay();
-  updatePomodoroDisplay();
-  
-  // Initialize settings toggles
-  elements.flipToggle.checked = timerState.flipEnabled;
-  elements.soundToggle.checked = timerState.soundEnabled;
+  /* Semantic Color Tokens (Light Mode) */
+  --color-background: var(--color-cream-50);
+  --color-surface: var(--color-cream-100);
+  --color-text: var(--color-slate-900);
+  --color-text-secondary: var(--color-slate-500);
+  --color-primary: var(--color-teal-500);
+  --color-primary-hover: var(--color-teal-600);
+  --color-primary-active: var(--color-teal-700);
+  --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-secondary-active: rgba(var(--color-brown-600-rgb), 0.25);
+  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-btn-primary-text: var(--color-cream-50);
+  --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-card-border-inner: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-error: var(--color-red-500);
+  --color-success: var(--color-teal-500);
+  --color-warning: var(--color-orange-500);
+  --color-info: var(--color-slate-500);
+  --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
+  --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
+
+  /* Common style patterns */
+  --focus-ring: 0 0 0 3px var(--color-focus-ring);
+  --focus-outline: 2px solid var(--color-primary);
+  --status-bg-opacity: 0.15;
+  --status-border-opacity: 0.25;
+  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134252' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+
+  /* RGB versions for opacity control */
+  --color-success-rgb: 33, 128, 141;
+  --color-error-rgb: 192, 21, 47;
+  --color-warning-rgb: 168, 75, 47;
+  --color-info-rgb: 98, 108, 113;
+
+  /* Typography */
+  --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono: "Berkeley Mono", ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 30px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 550;
+  --font-weight-bold: 600;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --letter-spacing-tight: -0.01em;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 1px;
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-base: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04),
+    0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04),
+    0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+
+  /* Animation */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
 }
 
-// Event Listeners
-function setupEventListeners() {
-  // Mode selection
-  elements.modeBtns.forEach(btn => {
-    btn.addEventListener('click', () => handleModeChange(btn.dataset.mode));
-  });
-  
-  // Timer controls
-  elements.startPauseBtn.addEventListener('click', toggleTimer);
-  elements.resetBtn.addEventListener('click', resetTimer);
-  elements.settingsBtn.addEventListener('click', openSettings);
-  
-  // Settings panel
-  elements.closeSettings.addEventListener('click', closeSettings);
-  elements.flipToggle.addEventListener('change', toggleFlipAnimation);
-  elements.soundToggle.addEventListener('change', toggleSound);
-  elements.fontSelector.addEventListener('change', changeFont);
-  elements.backgroundUpload.addEventListener('change', handleBackgroundUpload);
-  elements.clearBackground.addEventListener('click', clearBackground);
-  
-  // Pomodoro settings
-  elements.workDuration.addEventListener('change', updatePomodoroSettings);
-  elements.shortBreak.addEventListener('change', updatePomodoroSettings);
-  elements.longBreak.addEventListener('change', updatePomodoroSettings);
-  elements.sessionsUntilLongBreak.addEventListener('change', updatePomodoroSettings);
-}
+/* Dark mode colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* RGB versions for opacity control (Dark Mode) */
+    --color-gray-400-rgb: 119, 124, 124;
+    --color-teal-300-rgb: 50, 184, 198;
+    --color-gray-300-rgb: 167, 169, 169;
+    --color-gray-200-rgb: 245, 245, 245;
 
-// Mode Change
-function handleModeChange(mode) {
-  if (timerState.isRunning) {
-    stopTimer();
-  }
-  
-  timerState.mode = mode;
-  timerState.isPaused = false;
-  
-  // Update active button
-  elements.modeBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
-  
-  // Show/hide relevant sections
-  if (mode === 'pomodoro') {
-    elements.pomodoroStatus.classList.remove('hidden');
-    elements.countdownInput.classList.add('hidden');
-    elements.pomodoroSettings.style.display = 'block';
-    initializePomodoro();
-  } else if (mode === 'countdown') {
-    elements.pomodoroStatus.classList.add('hidden');
-    elements.countdownInput.classList.remove('hidden');
-    elements.pomodoroSettings.style.display = 'none';
-    initializeCountdown();
-  } else if (mode === 'stopwatch') {
-    elements.pomodoroStatus.classList.add('hidden');
-    elements.countdownInput.classList.add('hidden');
-    elements.pomodoroSettings.style.display = 'none';
-    initializeStopwatch();
-  }
-  
-  updateDisplay();
-}
+    /* Background color tokens (Dark Mode) */
+    --color-bg-1: rgba(29, 78, 216, 0.15); /* Dark blue */
+    --color-bg-2: rgba(180, 83, 9, 0.15); /* Dark yellow */
+    --color-bg-3: rgba(21, 128, 61, 0.15); /* Dark green */
+    --color-bg-4: rgba(185, 28, 28, 0.15); /* Dark red */
+    --color-bg-5: rgba(107, 33, 168, 0.15); /* Dark purple */
+    --color-bg-6: rgba(194, 65, 12, 0.15); /* Dark orange */
+    --color-bg-7: rgba(190, 24, 93, 0.15); /* Dark pink */
+    --color-bg-8: rgba(8, 145, 178, 0.15); /* Dark cyan */
 
-// Initialize Modes
-function initializePomodoro() {
-  timerState.pomodoroPhase = 'work';
-  timerState.currentSession = 1;
-  timerState.totalSessions = 0;
-  timerState.timeRemaining = timerState.workDuration;
-  updatePomodoroDisplay();
-}
+    /* Semantic Color Tokens (Dark Mode) */
+    --color-background: var(--color-charcoal-700);
+    --color-surface: var(--color-charcoal-800);
+    --color-text: var(--color-gray-200);
+    --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
+    --color-primary: var(--color-teal-300);
+    --color-primary-hover: var(--color-teal-400);
+    --color-primary-active: var(--color-teal-800);
+    --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
+    --color-secondary-hover: rgba(var(--color-gray-400-rgb), 0.25);
+    --color-secondary-active: rgba(var(--color-gray-400-rgb), 0.3);
+    --color-border: rgba(var(--color-gray-400-rgb), 0.3);
+    --color-error: var(--color-red-400);
+    --color-success: var(--color-teal-300);
+    --color-warning: var(--color-orange-400);
+    --color-info: var(--color-gray-300);
+    --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
+    --color-btn-primary-text: var(--color-slate-900);
+    --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
+    --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
+    --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    --button-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
+    --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
+    --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
 
-function initializeCountdown() {
-  const hours = parseInt(elements.hoursInput.value) || 0;
-  const minutes = parseInt(elements.minutesInput.value) || 0;
-  const seconds = parseInt(elements.secondsInput.value) || 0;
-  timerState.timeRemaining = hours * 3600 + minutes * 60 + seconds;
-}
+    /* Common style patterns - updated for dark mode */
+    --focus-ring: 0 0 0 3px var(--color-focus-ring);
+    --focus-outline: 2px solid var(--color-primary);
+    --status-bg-opacity: 0.15;
+    --status-border-opacity: 0.25;
+    --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134252' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 
-function initializeStopwatch() {
-  timerState.timeRemaining = 0;
-  timerState.elapsedTime = 0;
-}
-
-// Timer Control
-function toggleTimer() {
-  if (timerState.isRunning) {
-    pauseTimer();
-  } else {
-    startTimer();
-  }
-}
-
-function startTimer() {
-  if (timerState.mode === 'countdown' && !timerState.isPaused) {
-    initializeCountdown();
-  }
-  
-  timerState.isRunning = true;
-  timerState.isPaused = false;
-  timerState.startTime = Date.now();
-  
-  elements.startPauseBtn.innerHTML = `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="6" y="4" width="4" height="16"></rect>
-      <rect x="14" y="4" width="4" height="16"></rect>
-    </svg>
-    Pause
-  `;
-  
-  runTimer();
-}
-
-function pauseTimer() {
-  timerState.isRunning = false;
-  timerState.isPaused = true;
-  
-  if (timerState.intervalId) {
-    clearInterval(timerState.intervalId);
-    timerState.intervalId = null;
-  }
-  
-  elements.startPauseBtn.innerHTML = `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-    </svg>
-    Resume
-  `;
-}
-
-function stopTimer() {
-  timerState.isRunning = false;
-  timerState.isPaused = false;
-  
-  if (timerState.intervalId) {
-    clearInterval(timerState.intervalId);
-    timerState.intervalId = null;
-  }
-  
-  elements.startPauseBtn.innerHTML = `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-    </svg>
-    Start
-  `;
-}
-
-function resetTimer() {
-  stopTimer();
-  
-  if (timerState.mode === 'pomodoro') {
-    initializePomodoro();
-  } else if (timerState.mode === 'countdown') {
-    initializeCountdown();
-  } else if (timerState.mode === 'stopwatch') {
-    initializeStopwatch();
-  }
-  
-  updateDisplay();
-}
-
-// Timer Logic
-function runTimer() {
-  timerState.intervalId = setInterval(() => {
-    if (!timerState.isRunning) return;
-    
-    if (timerState.mode === 'stopwatch') {
-      timerState.elapsedTime++;
-      timerState.timeRemaining = timerState.elapsedTime;
-    } else {
-      timerState.timeRemaining--;
-      
-      if (timerState.timeRemaining <= 0) {
-        handleTimerComplete();
-        return;
-      }
-    }
-    
-    updateDisplay();
-    
-    if (timerState.mode === 'pomodoro') {
-      updateProgressBar();
-    }
-  }, 1000);
-}
-
-function handleTimerComplete() {
-  if (timerState.soundEnabled) {
-    playNotificationSound();
-  }
-  
-  if (timerState.mode === 'pomodoro') {
-    handlePomodoroComplete();
-  } else {
-    stopTimer();
-    timerState.timeRemaining = 0;
-    updateDisplay();
+    /* RGB versions for dark mode */
+    --color-success-rgb: var(--color-teal-300-rgb);
+    --color-error-rgb: var(--color-red-400-rgb);
+    --color-warning-rgb: var(--color-orange-400-rgb);
+    --color-info-rgb: var(--color-gray-300-rgb);
   }
 }
 
-function handlePomodoroComplete() {
-  if (timerState.pomodoroPhase === 'work') {
-    timerState.totalSessions++;
-    
-    if (timerState.totalSessions % timerState.sessionsUntilLongBreak === 0) {
-      // Long break
-      timerState.pomodoroPhase = 'longBreak';
-      timerState.timeRemaining = timerState.longBreakDuration;
-    } else {
-      // Short break
-      timerState.pomodoroPhase = 'shortBreak';
-      timerState.timeRemaining = timerState.shortBreakDuration;
-    }
-  } else {
-    // Break ended, start work
-    timerState.pomodoroPhase = 'work';
-    timerState.currentSession = (timerState.totalSessions % timerState.sessionsUntilLongBreak) + 1;
-    timerState.timeRemaining = timerState.workDuration;
+/* Data attribute for manual theme switching */
+[data-color-scheme="dark"] {
+  /* RGB versions for opacity control (dark mode) */
+  --color-gray-400-rgb: 119, 124, 124;
+  --color-teal-300-rgb: 50, 184, 198;
+  --color-gray-300-rgb: 167, 169, 169;
+  --color-gray-200-rgb: 245, 245, 245;
+
+  /* Colorful background palette - Dark Mode */
+  --color-bg-1: rgba(29, 78, 216, 0.15); /* Dark blue */
+  --color-bg-2: rgba(180, 83, 9, 0.15); /* Dark yellow */
+  --color-bg-3: rgba(21, 128, 61, 0.15); /* Dark green */
+  --color-bg-4: rgba(185, 28, 28, 0.15); /* Dark red */
+  --color-bg-5: rgba(107, 33, 168, 0.15); /* Dark purple */
+  --color-bg-6: rgba(194, 65, 12, 0.15); /* Dark orange */
+  --color-bg-7: rgba(190, 24, 93, 0.15); /* Dark pink */
+  --color-bg-8: rgba(8, 145, 178, 0.15); /* Dark cyan */
+
+  /* Semantic Color Tokens (Dark Mode) */
+  --color-background: var(--color-charcoal-700);
+  --color-surface: var(--color-charcoal-800);
+  --color-text: var(--color-gray-200);
+  --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
+  --color-primary: var(--color-teal-300);
+  --color-primary-hover: var(--color-teal-400);
+  --color-primary-active: var(--color-teal-800);
+  --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
+  --color-secondary-hover: rgba(var(--color-gray-400-rgb), 0.25);
+  --color-secondary-active: rgba(var(--color-gray-400-rgb), 0.3);
+  --color-border: rgba(var(--color-gray-400-rgb), 0.3);
+  --color-error: var(--color-red-400);
+  --color-success: var(--color-teal-300);
+  --color-warning: var(--color-orange-400);
+  --color-info: var(--color-gray-300);
+  --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
+  --color-btn-primary-text: var(--color-slate-900);
+  --color-card-border: rgba(var(--color-gray-400-rgb), 0.15);
+  --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
+  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
+  --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
+
+  /* Common style patterns - updated for dark mode */
+  --focus-ring: 0 0 0 3px var(--color-focus-ring);
+  --focus-outline: 2px solid var(--color-primary);
+  --status-bg-opacity: 0.15;
+  --status-border-opacity: 0.25;
+  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134252' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+
+  /* RGB versions for dark mode */
+  --color-success-rgb: var(--color-teal-300-rgb);
+  --color-error-rgb: var(--color-red-400-rgb);
+  --color-warning-rgb: var(--color-orange-400-rgb);
+  --color-info-rgb: var(--color-gray-300-rgb);
+}
+
+[data-color-scheme="light"] {
+  /* RGB versions for opacity control (light mode) */
+  --color-brown-600-rgb: 94, 82, 64;
+  --color-teal-500-rgb: 33, 128, 141;
+  --color-slate-900-rgb: 19, 52, 59;
+
+  /* Semantic Color Tokens (Light Mode) */
+  --color-background: var(--color-cream-50);
+  --color-surface: var(--color-cream-100);
+  --color-text: var(--color-slate-900);
+  --color-text-secondary: var(--color-slate-500);
+  --color-primary: var(--color-teal-500);
+  --color-primary-hover: var(--color-teal-600);
+  --color-primary-active: var(--color-teal-700);
+  --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-secondary-active: rgba(var(--color-brown-600-rgb), 0.25);
+  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-btn-primary-text: var(--color-cream-50);
+  --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-card-border-inner: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-error: var(--color-red-500);
+  --color-success: var(--color-teal-500);
+  --color-warning: var(--color-orange-500);
+  --color-info: var(--color-slate-500);
+  --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
+
+  /* RGB versions for light mode */
+  --color-success-rgb: var(--color-teal-500-rgb);
+  --color-error-rgb: var(--color-red-500-rgb);
+  --color-warning-rgb: var(--color-orange-500-rgb);
+  --color-info-rgb: var(--color-slate-500-rgb);
+}
+
+/* Base styles */
+html {
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+}
+h2 {
+  font-size: var(--font-size-3xl);
+}
+h3 {
+  font-size: var(--font-size-2xl);
+}
+h4 {
+  font-size: var(--font-size-xl);
+}
+h5 {
+  font-size: var(--font-size-lg);
+}
+h6 {
+  font-size: var(--font-size-md);
+}
+
+p {
+  margin: 0 0 var(--space-16) 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+code,
+pre {
+  font-family: var(--font-family-mono);
+  font-size: calc(var(--font-size-base) * 0.95);
+  background-color: var(--color-secondary);
+  border-radius: var(--radius-sm);
+}
+
+code {
+  padding: var(--space-1) var(--space-4);
+}
+
+pre {
+  padding: var(--space-16);
+  margin: var(--space-16) 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-standard);
+  border: none;
+  text-decoration: none;
+  position: relative;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn--primary:active {
+  background: var(--color-primary-active);
+}
+
+.btn--secondary {
+  background: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.btn--secondary:hover {
+  background: var(--color-secondary-hover);
+}
+
+.btn--secondary:active {
+  background: var(--color-secondary-active);
+}
+
+.btn--outline {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn--outline:hover {
+  background: var(--color-secondary);
+}
+
+.btn--sm {
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+}
+
+.btn--lg {
+  padding: var(--space-10) var(--space-20);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-md);
+}
+
+.btn--full-width {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Form elements */
+.form-control {
+  display: block;
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+textarea.form-control {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+}
+
+select.form-control {
+  padding: var(--space-8) var(--space-12);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: var(--select-caret-light);
+  background-repeat: no-repeat;
+  background-position: right var(--space-12) center;
+  background-size: 16px;
+  padding-right: var(--space-32);
+}
+
+/* Add a dark mode specific caret */
+@media (prefers-color-scheme: dark) {
+  select.form-control {
+    background-image: var(--select-caret-dark);
+  }
+}
+
+/* Also handle data-color-scheme */
+[data-color-scheme="dark"] select.form-control {
+  background-image: var(--select-caret-dark);
+}
+
+[data-color-scheme="light"] select.form-control {
+  background-image: var(--select-caret-light);
+}
+
+.form-control:focus {
+  border-color: var(--color-primary);
+  outline: var(--focus-outline);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--space-8);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+}
+
+.form-group {
+  margin-bottom: var(--space-16);
+}
+
+/* Card component */
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--duration-normal) var(--ease-standard);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card__body {
+  padding: var(--space-16);
+}
+
+.card__header,
+.card__footer {
+  padding: var(--space-16);
+  border-bottom: 1px solid var(--color-card-border-inner);
+}
+
+/* Status indicators - simplified with CSS variables */
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-6) var(--space-12);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+}
+
+.status--success {
+  background-color: rgba(
+    var(--color-success-rgb, 33, 128, 141),
+    var(--status-bg-opacity)
+  );
+  color: var(--color-success);
+  border: 1px solid
+    rgba(var(--color-success-rgb, 33, 128, 141), var(--status-border-opacity));
+}
+
+.status--error {
+  background-color: rgba(
+    var(--color-error-rgb, 192, 21, 47),
+    var(--status-bg-opacity)
+  );
+  color: var(--color-error);
+  border: 1px solid
+    rgba(var(--color-error-rgb, 192, 21, 47), var(--status-border-opacity));
+}
+
+.status--warning {
+  background-color: rgba(
+    var(--color-warning-rgb, 168, 75, 47),
+    var(--status-bg-opacity)
+  );
+  color: var(--color-warning);
+  border: 1px solid
+    rgba(var(--color-warning-rgb, 168, 75, 47), var(--status-border-opacity));
+}
+
+.status--info {
+  background-color: rgba(
+    var(--color-info-rgb, 98, 108, 113),
+    var(--status-bg-opacity)
+  );
+  color: var(--color-info);
+  border: 1px solid
+    rgba(var(--color-info-rgb, 98, 108, 113), var(--status-border-opacity));
+}
+
+/* Container layout */
+.container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: var(--space-16);
+  padding-left: var(--space-16);
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: var(--container-sm);
+  }
+}
+@media (min-width: 768px) {
+  .container {
+    max-width: var(--container-md);
+  }
+}
+@media (min-width: 1024px) {
+  .container {
+    max-width: var(--container-lg);
+  }
+}
+@media (min-width: 1280px) {
+  .container {
+    max-width: var(--container-xl);
+  }
+}
+
+/* Utility classes */
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.gap-4 {
+  gap: var(--space-4);
+}
+.gap-8 {
+  gap: var(--space-8);
+}
+.gap-16 {
+  gap: var(--space-16);
+}
+
+.m-0 {
+  margin: 0;
+}
+.mt-8 {
+  margin-top: var(--space-8);
+}
+.mb-8 {
+  margin-bottom: var(--space-8);
+}
+.mx-8 {
+  margin-left: var(--space-8);
+  margin-right: var(--space-8);
+}
+.my-8 {
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-8);
+}
+
+.p-0 {
+  padding: 0;
+}
+.py-8 {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+.px-8 {
+  padding-left: var(--space-8);
+  padding-right: var(--space-8);
+}
+.py-16 {
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+}
+.px-16 {
+  padding-left: var(--space-16);
+  padding-right: var(--space-16);
+}
+
+.block {
+  display: block;
+}
+.hidden {
+  display: none;
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 2px;
+}
+
+/* Dark mode specifics */
+[data-color-scheme="dark"] .btn--outline {
+  border: 1px solid var(--color-border-secondary);
+}
+
+@font-face {
+  font-family: 'FKGroteskNeue';
+  src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2')
+    format('woff2');
+}
+
+/* END PERPLEXITY DESIGN SYSTEM */
+
+/* Ultimate Timer App Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-base);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: var(--color-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  overflow: hidden;
+}
+
+.video-background video,
+.video-background img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.background-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-24);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: var(--space-32);
+}
+
+.app-title {
+  font-size: 48px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+  margin-bottom: var(--space-24);
+}
+
+.mode-selector {
+  display: flex;
+  gap: var(--space-12);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  padding: var(--space-12) var(--space-24);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-standard);
+  backdrop-filter: blur(10px);
+}
+
+.mode-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.mode-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(33, 128, 141, 0.4);
+}
+
+/* Timer Section */
+.timer-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-32);
+}
+
+/* Pomodoro Status */
+.pomodoro-status {
+  text-align: center;
+  color: white;
+  margin-bottom: var(--space-16);
+}
+
+.pomodoro-status.hidden {
+  display: none;
+}
+
+.session-type {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-8);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.session-counter {
+  font-size: var(--font-size-lg);
+  opacity: 0.9;
+  margin-bottom: var(--space-16);
+}
+
+.progress-bar {
+  width: 300px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 1s linear;
+  width: 0%;
+}
+
+/* Countdown Input */
+.countdown-input {
+  display: flex;
+  gap: var(--space-24);
+  margin-bottom: var(--space-16);
+}
+
+.countdown-input.hidden {
+  display: none;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.time-input {
+  width: 80px;
+  padding: var(--space-12);
+  font-size: var(--font-size-2xl);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.time-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.input-group label {
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Timer Display */
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-32);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.digit-group {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.digit {
+  font-size: 96px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.4);
+  font-family: 'Orbitron', monospace;
+  min-width: 70px;
+  text-align: center;
+  line-height: 1;
+  transition: font-family var(--duration-normal) var(--ease-standard);
+}
+
+.separator {
+  font-size: 96px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.4);
+  line-height: 1;
+}
+
+/* Professional Flip Animation like flipclocks.org */
+.flip-enabled .digit {
+  position: relative;
+  display: inline-block;
+  perspective: 400px;
+}
+
+.flip-enabled .digit.flipping {
+  animation: flip 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+.flip-enabled .digit.flipping::before {
+  content: attr(data-old-value);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  transform-origin: bottom;
+  animation: flipTop 0.3s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 96px;
+  font-weight: var(--font-weight-bold);
+  font-family: 'Orbitron', monospace;
+  text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.flip-enabled .digit.flipping::after {
+  content: attr(data-current-value);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #34495e, #2c3e50);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  transform: rotateX(90deg);
+  transform-origin: top;
+  animation: flipBottom 0.3s 0.3s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 96px;
+  font-weight: var(--font-weight-bold);
+  font-family: 'Orbitron', monospace;
+  text-shadow: 3px 3px 12px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+}
+
+@keyframes flipTop {
+  0% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: rotateX(-90deg);
+    opacity: 0;
+  }
+}
+
+@keyframes flipBottom {
+  0% {
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+/* Background Media Styles */
+.background-media {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+/* Desktop-only background restriction */
+@media (max-width: 768px) {
+  .video-background img.background-media {
+    display: none !important;
   }
   
-  updatePomodoroDisplay();
-  updateDisplay();
-  
-  // Auto-start next phase
-  startTimer();
-}
-
-// Display Updates
-function updateDisplay() {
-  const time = timerState.timeRemaining;
-  const hours = Math.floor(time / 3600);
-  const minutes = Math.floor((time % 3600) / 60);
-  const seconds = time % 60;
-  
-  updateDigit('hours-tens', Math.floor(hours / 10));
-  updateDigit('hours-ones', hours % 10);
-  updateDigit('minutes-tens', Math.floor(minutes / 10));
-  updateDigit('minutes-ones', minutes % 10);
-  updateDigit('seconds-tens', Math.floor(seconds / 10));
-  updateDigit('seconds-ones', seconds % 10);
-}
-
-function updateDigit(digitType, value) {
-  const digitEl = elements.digits[digitType];
-  const currentValue = parseInt(digitEl.textContent);
-  
-  if (currentValue !== value) {
-    if (timerState.flipEnabled && timerState.isRunning) {
-      // Store old value for flip animation
-      digitEl.setAttribute('data-old-value', currentValue);
-      digitEl.setAttribute('data-current-value', value);
-      
-      // Add flipping class
-      digitEl.classList.add('flipping');
-      
-      // Update the visible text after animation
-      setTimeout(() => {
-        digitEl.textContent = value;
-        digitEl.classList.remove('flipping');
-      }, 300);
-    } else {
-      // No animation, just update
-      digitEl.textContent = value;
-    }
+  .video-background video.background-media {
+    display: none !important;
   }
 }
 
-function updatePomodoroDisplay() {
-  if (timerState.mode !== 'pomodoro') return;
-  
-  const phaseNames = {
-    work: 'Work Session',
-    shortBreak: 'Short Break',
-    longBreak: 'Long Break'
-  };
-  
-  elements.sessionType.textContent = phaseNames[timerState.pomodoroPhase];
-  elements.sessionCounter.textContent = `Session ${timerState.currentSession} of ${timerState.sessionsUntilLongBreak}`;
-  
-  updateProgressBar();
+/* Timer Controls */
+.timer-controls {
+  display: flex;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-function updateProgressBar() {
-  let totalDuration;
-  if (timerState.pomodoroPhase === 'work') {
-    totalDuration = timerState.workDuration;
-  } else if (timerState.pomodoroPhase === 'shortBreak') {
-    totalDuration = timerState.shortBreakDuration;
-  } else {
-    totalDuration = timerState.longBreakDuration;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-24);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-standard);
+  border: none;
+  text-decoration: none;
+  font-family: var(--font-family-base);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  box-shadow: 0 4px 12px rgba(33, 128, 141, 0.3);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(33, 128, 141, 0.4);
+}
+
+.btn--primary:active {
+  background: var(--color-primary-active);
+  transform: translateY(0);
+}
+
+.btn--secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn--outline {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.btn--outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn--lg {
+  padding: var(--space-16) var(--space-32);
+  font-size: var(--font-size-lg);
+}
+
+.btn--sm {
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--font-size-sm);
+}
+
+.btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Settings Panel */
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 500px;
+  height: 100vh;
+  background: var(--color-surface);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform var(--duration-normal) var(--ease-standard);
+  overflow-y: auto;
+}
+
+.settings-panel.active {
+  transform: translateX(0);
+}
+
+.settings-panel.hidden {
+  display: block;
+}
+
+.settings-content {
+  padding: var(--space-24);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-24);
+  padding-bottom: var(--space-16);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.settings-header h2 {
+  font-size: var(--font-size-3xl);
+  color: var(--color-text);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 32px;
+  color: var(--color-text);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-base);
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.close-btn:hover {
+  background: var(--color-secondary);
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.setting-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-8);
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  cursor: pointer;
+}
+
+.toggle-input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 48px;
+  height: 24px;
+  background: var(--color-secondary);
+  border-radius: var(--radius-full);
+  position: relative;
+  transition: background var(--duration-normal) var(--ease-standard);
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: var(--color-primary);
+}
+
+.toggle-input:checked + .toggle-slider::after {
+  transform: translateX(24px);
+}
+
+.setting-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--space-8);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  padding: var(--space-12);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.form-control:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.upload-section {
+  display: flex;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.upload-btn {
+  flex: 1;
+  min-width: 200px;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-status {
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  margin-top: var(--space-8);
+}
+
+.pomodoro-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 32px;
   }
-  
-  const progress = ((totalDuration - timerState.timeRemaining) / totalDuration) * 100;
-  elements.progressFill.style.width = `${progress}%`;
-}
 
-// Settings
-function openSettings() {
-  elements.settingsPanel.classList.add('active');
-  elements.settingsPanel.classList.remove('hidden');
-}
+  .digit {
+    font-size: 64px;
+    min-width: 50px;
+  }
 
-function closeSettings() {
-  elements.settingsPanel.classList.remove('active');
-}
+  .separator {
+    font-size: 64px;
+  }
 
-function toggleFlipAnimation(e) {
-  timerState.flipEnabled = e.target.checked;
-  if (timerState.flipEnabled) {
-    elements.timerDisplay.classList.add('flip-enabled');
-  } else {
-    elements.timerDisplay.classList.remove('flip-enabled');
+  .timer-display {
+    padding: var(--space-24);
+    gap: var(--space-12);
+  }
+
+  .settings-panel {
+    max-width: 100%;
+  }
+
+  .countdown-input {
+    gap: var(--space-12);
+  }
+
+  .time-input {
+    width: 60px;
+    font-size: var(--font-size-xl);
+  }
+
+  /* Mobile flip animation adjustments */
+  .flip-enabled .digit.flipping::before,
+  .flip-enabled .digit.flipping::after {
+    font-size: 64px;
   }
 }
 
-function toggleSound(e) {
-  timerState.soundEnabled = e.target.checked;
-}
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 24px;
+  }
 
-function changeFont(e) {
-  timerState.currentFont = e.target.value;
-  const digits = document.querySelectorAll('.digit, .separator');
-  digits.forEach(digit => {
-    digit.style.fontFamily = timerState.currentFont;
-  });
-}
+  .digit {
+    font-size: 48px;
+    min-width: 40px;
+  }
 
-function handleBackgroundUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  
-  reader.onload = function(event) {
-    const fileType = file.type;
-    
-    if (fileType.startsWith('image/')) {
-      setImageBackground(event.target.result);
-      elements.uploadStatus.textContent = 'Image uploaded successfully!';
-    } else if (fileType.startsWith('video/')) {
-      setVideoBackground(event.target.result);
-      elements.uploadStatus.textContent = 'Video uploaded successfully!';
-    }
-    
-    setTimeout(() => {
-      elements.uploadStatus.textContent = '';
-    }, 3000);
-  };
-  
-  reader.readAsDataURL(file);
-}
+  .separator {
+    font-size: 48px;
+  }
 
-function setImageBackground(dataUrl) {
-  // Clear any existing background
-  elements.videoBackground.innerHTML = '';
-  
-  // Create image element
-  const img = document.createElement('img');
-  img.src = dataUrl;
-  img.alt = 'Background';
-  img.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
+  .timer-controls {
+    flex-direction: column;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -2;
-  `;
-  
-  // Add to background container
-  elements.videoBackground.appendChild(img);
-  
-  timerState.backgroundMedia = dataUrl;
-  timerState.backgroundType = 'image';
-  
-  elements.uploadStatus.textContent = 'Background image set successfully!';
-  setTimeout(() => {
-    elements.uploadStatus.textContent = '';
-  }, 3000);
-}
+  }
 
-function setVideoBackground(dataUrl) {
-  // Clear any existing background
-  elements.videoBackground.innerHTML = '';
-  
-  // Create video element
-  const video = document.createElement('video');
-  video.src = dataUrl;
-  video.autoplay = true;
-  video.loop = true;
-  video.muted = true;
-  video.playsInline = true;
-  video.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
+  .btn--lg {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -2;
-  `;
-  
-  // Add to background container
-  elements.videoBackground.appendChild(video);
-  
-  timerState.backgroundMedia = dataUrl;
-  timerState.backgroundType = 'video';
-  
-  elements.uploadStatus.textContent = 'Background video set successfully!';
-  setTimeout(() => {
-    elements.uploadStatus.textContent = '';
-  }, 3000);
-}
+  }
 
-function clearBackground() {
-  elements.videoBackground.innerHTML = '';
-  timerState.backgroundMedia = null;
-  timerState.backgroundType = null;
-  elements.uploadStatus.textContent = 'Background cleared';
-  setTimeout(() => {
-    elements.uploadStatus.textContent = '';
-  }, 2000);
-}
+  .progress-bar {
+    width: 200px;
+  }
 
-function updatePomodoroSettings() {
-  timerState.workDuration = parseInt(elements.workDuration.value) * 60;
-  timerState.shortBreakDuration = parseInt(elements.shortBreak.value) * 60;
-  timerState.longBreakDuration = parseInt(elements.longBreak.value) * 60;
-  timerState.sessionsUntilLongBreak = parseInt(elements.sessionsUntilLongBreak.value);
-  
-  if (timerState.mode === 'pomodoro' && !timerState.isRunning) {
-    initializePomodoro();
-    updateDisplay();
+  .timer-display {
+    padding: var(--space-16);
+    gap: var(--space-8);
+  }
+
+  /* Mobile flip animation adjustments */
+  .flip-enabled .digit.flipping::before,
+  .flip-enabled .digit.flipping::after {
+    font-size: 48px;
   }
 }
 
-// Notification Sound
-function playNotificationSound() {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  oscillator.frequency.value = 800;
-  oscillator.type = 'sine';
-  
-  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-  
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.5);
+.hidden {
+  display: none !important;
 }
 
-// Initialize app
-init();
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
