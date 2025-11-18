@@ -22,7 +22,8 @@ const timerState = {
   soundEnabled: true,
   currentFont: "'Orbitron', monospace",
   backgroundMedia: null,
-  backgroundType: null // 'image' or 'video'
+  backgroundType: null, // 'image' or 'video'
+  currentTheme: 'default'
 };
 
 // DOM Elements
@@ -60,6 +61,7 @@ const elements = {
   backgroundUpload: document.getElementById('backgroundUpload'),
   clearBackground: document.getElementById('clearBackground'),
   uploadStatus: document.getElementById('uploadStatus'),
+  themeSelector: document.getElementById('themeSelector'),
   
   // Pomodoro settings
   pomodoroSettings: document.getElementById('pomodoroSettings'),
@@ -88,6 +90,10 @@ function init() {
   // Initialize settings toggles
   elements.flipToggle.checked = timerState.flipEnabled;
   elements.soundToggle.checked = timerState.soundEnabled;
+  
+  // Set default font to match flipclocks.org
+  elements.fontSelector.value = "'Orbitron', monospace";
+  changeFont({ target: elements.fontSelector });
 }
 
 // Event Listeners
@@ -109,6 +115,7 @@ function setupEventListeners() {
   elements.fontSelector.addEventListener('change', changeFont);
   elements.backgroundUpload.addEventListener('change', handleBackgroundUpload);
   elements.clearBackground.addEventListener('click', clearBackground);
+  elements.themeSelector.addEventListener('change', changeTheme);
   
   // Pomodoro settings
   elements.workDuration.addEventListener('change', updatePomodoroSettings);
@@ -344,11 +351,13 @@ function updateDigit(digitType, value) {
       // Add flipping class
       digitEl.classList.add('flipping');
       
-      // Update the visible text after animation
+      // Update the visible text immediately (but it's hidden by the pseudo-elements)
+      digitEl.textContent = value;
+      
+      // Remove flipping class after animation completes
       setTimeout(() => {
-        digitEl.textContent = value;
         digitEl.classList.remove('flipping');
-      }, 300);
+      }, 600);
     } else {
       // No animation, just update
       digitEl.textContent = value;
@@ -414,6 +423,11 @@ function changeFont(e) {
   digits.forEach(digit => {
     digit.style.fontFamily = timerState.currentFont;
   });
+}
+
+function changeTheme(e) {
+  timerState.currentTheme = e.target.value;
+  document.body.setAttribute('data-theme', timerState.currentTheme);
 }
 
 function handleBackgroundUpload(e) {
