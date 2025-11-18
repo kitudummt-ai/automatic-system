@@ -1088,10 +1088,27 @@ body {
 }
 
 /* Improved Flip Animation */
+/* Fixed Flip Animation */
 .flip-enabled .digit {
   position: relative;
-  perspective: 1000px;
   display: inline-block;
+  perspective: 400px;
+}
+
+.flip-enabled .digit.flipping {
+  animation: flip 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+@keyframes flip {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
 }
 
 .flip-enabled .digit.flipping::before {
@@ -1102,41 +1119,42 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  animation: flipOut 0.3s ease-in-out forwards;
+  border-radius: 8px;
+  transform-origin: bottom;
+  animation: flipTop 0.3s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
 }
 
 .flip-enabled .digit.flipping::after {
   content: attr(data-current-value);
-  position: relative;
-  display: block;
-  animation: flipIn 0.3s ease-in-out 0.3s forwards;
-  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
   transform: rotateX(90deg);
+  transform-origin: top;
+  animation: flipBottom 0.3s 0.3s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
 }
 
-@keyframes flipOut {
+@keyframes flipTop {
   0% {
     transform: rotateX(0deg);
-    opacity: 1;
   }
   100% {
     transform: rotateX(-90deg);
-    opacity: 0;
   }
 }
 
-@keyframes flipIn {
+@keyframes flipBottom {
   0% {
     transform: rotateX(90deg);
-    opacity: 0;
   }
   100% {
     transform: rotateX(0deg);
-    opacity: 1;
   }
 }
-
 /* Desktop-only background */
 @media (min-width: 769px) {
   .background-image {
